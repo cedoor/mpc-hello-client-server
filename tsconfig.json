@@ -16,6 +16,7 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
+    "noImplicitAny": false,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
@@ -26,8 +27,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src",
-    "server.ts"
+    "src"
   ],
   "references": [
     {

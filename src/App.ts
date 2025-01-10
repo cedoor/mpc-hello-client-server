@@ -1,65 +1,35 @@
-import AsyncQueue from './AsyncQueue';
-import assert from './assert';
-import generateProtocol from './generateProtocol';
+import AsyncQueue from './utils/AsyncQueue';
+import assert from './utils/assert';
+import generateProtocol from './utils/generateProtocol';
+import getCircuitFiles from './utils/getCircuitFiles';
 
 export default class App {
-  socket?: WebSocket;
-  party?: 'alice' | 'bob';
+  socket: WebSocket = new WebSocket('ws://localhost:8080');
   msgQueue = new AsyncQueue<unknown>();
 
-  generateJoiningCode() {
-    // 128 bits of entropy
-    return [
-      Math.random().toString(36).substring(2, 12),
-      Math.random().toString(36).substring(2, 12),
-      Math.random().toString(36).substring(2, 7),
-    ].join('');
-  }
+  constructor() {
+    this.socket.addEventListener('error', console.error, { once: true });
 
-  async connect(code: string, party: 'alice' | 'bob') {
-    this.party = party;
-    const socket = new WebSocket('ws://localhost:8080');
-    this.socket = socket;
+    this.socket.addEventListener('open', () => {
+      this.socket.addEventListener('message', async (event: MessageEvent) => {
+        const message = new Uint8Array(await event.data.arrayBuffer());
 
-    await new Promise<void>((resolve, reject) => {
-      socket.addEventListener('open', () => {
-        socket.send(`code:${code}`);
-
-        socket.addEventListener('message', (event: MessageEvent) => {
-          if (event.data === 'connected') {
-            resolve();
-          }
-        }, { once: true });
-      }, { once: true });
-      socket.addEventListener('error', reject, { once: true });
-    });
-
-    socket.addEventListener('message', async (event: MessageEvent) => {
-      // Using a message queue instead of passing messages directly to the MPC
-      // protocol ensures that we don't miss anything sent before we begin.
-      const message = new Uint8Array(await event.data.arrayBuffer());
-
-      this.msgQueue.push(message);
-    });
+        // Using a message queue instead of passing messages directly to the MPC
+        // protocol ensures that we don't miss anything sent before we begin.
+        this.msgQueue.push(message);
+      });
+    }, { once: true });
   }
 
   async mpcLargest(value: number): Promise<number> {
-    const { party, socket } = this;
-
-    assert(party !== undefined, 'Party must be set');
-    assert(socket !== undefined, 'Socket must be set');
-
-    const input = party === 'alice' ? { a: value } : { b: value };
-    const otherParty = party === 'alice' ? 'bob' : 'alice';
-
-    const protocol = await generateProtocol();
+    const protocol = await generateProtocol('/circuit/main.ts', await getCircuitFiles());
 
     const session = protocol.join(
-      party,
-      input,
+      'client',
+      { a: value },
       (to, msg) => {
-        assert(to === otherParty, 'Unexpected party');
-        socket.send(msg);
+        assert(to === 'server', 'Unexpected party');
+        this.socket.send(msg);
       },
     );
 
@@ -68,7 +38,7 @@ export default class App {
         throw new Error('Unexpected message type');
       }
 
-      session.handleMessage(otherParty, msg);
+      session.handleMessage('server', msg);
     });
 
     const output = await session.output();

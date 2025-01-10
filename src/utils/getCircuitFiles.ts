@@ -1,4 +1,4 @@
-const files = import.meta.glob('./circuit/**/*.ts', { query: '?raw', import: 'default' });
+const files = import.meta.glob('../circuit/**/*.ts', { query: '?raw', import: 'default' });
 
 export default async function getCircuitFiles() {
   const circuitFiles: Record<string, string> = {};
