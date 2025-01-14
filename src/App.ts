@@ -25,10 +25,13 @@ export default class App {
     const protocol = await generateProtocol('/circuit/main.ts', await getCircuitFiles());
 
     const session = protocol.join(
-      'client',
+      'alice',
       { a: value },
       (to, msg) => {
-        assert(to === 'server', 'Unexpected party');
+        assert(to === 'bob', 'Unexpected party');
+
+        console.log('client sent', msg);
+
         this.socket.send(msg);
       },
     );
@@ -38,7 +41,9 @@ export default class App {
         throw new Error('Unexpected message type');
       }
 
-      session.handleMessage('server', msg);
+      console.log('client received', msg);
+
+      session.handleMessage('bob', msg);
     });
 
     const output = await session.output();
