@@ -2,13 +2,13 @@ import * as summon from 'summon-ts';
 import { Protocol } from 'mpc-framework';
 import { EmpWasmBackend } from 'emp-wasm-backend';
 
-export default async function generateProtocol(mainFile, files?) {
+export default async function generateProtocol(mainFile, filesOrFileReader) {
   await summon.init();
 
   const circuit = summon.compileBoolean(
     mainFile,
     16,
-    files,
+    filesOrFileReader,
   );
 
   const mpcSettings = [

@@ -30,8 +30,6 @@ export default class App {
       (to, msg) => {
         assert(to === 'bob', 'Unexpected party');
 
-        console.log('client sent', msg);
-
         this.socket.send(msg);
       },
     );
@@ -40,8 +38,6 @@ export default class App {
       if (!(msg instanceof Uint8Array)) {
         throw new Error('Unexpected message type');
       }
-
-      console.log('client received', msg);
 
       session.handleMessage('bob', msg);
     });

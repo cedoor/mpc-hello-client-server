@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import generateProtocol from '../utils/generateProtocol';
 import assert from '../utils/assert';
+import { readFileSync } from 'fs';
 
 const wss = new WebSocketServer({ port: 8080 });
 
@@ -9,11 +10,9 @@ wss.on('connection', async ws => {
 
   let session;
 
-  const protocol = await generateProtocol('./src/circuit/main.ts');
+  const protocol = await generateProtocol('./src/circuit/main.ts', (filePath: string) => readFileSync(filePath, 'utf8'));
 
   ws.on('message', (msg: Buffer) => {
-    console.log('server received', msg);
-
     if (!session) {
       session = protocol.join(
         'bob',
@@ -21,13 +20,11 @@ wss.on('connection', async ws => {
         (to, msg) => {
           assert(to === 'alice', 'Unexpected party');
 
-          console.log('server sent', msg);
-
           ws.send(msg);
         },
       );
 
-      session.output(console.log);
+      session.output().then(console.log);
     }
 
     session.handleMessage('alice', new Uint8Array(msg));
