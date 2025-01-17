@@ -10,10 +10,10 @@
     "build": "tsc && vite build"
   },
   "dependencies": {
-    "emp-wasm-backend": "file:../emp-wasm-backend",
+    "emp-wasm-backend": "^0.2.2",
     "events": "^3.3.0",
     "mpc-framework": "^0.1.4",
-    "summon-ts": "file:../summon-ts",
+    "summon-ts": "file:../../summon-ts",
     "ws": "^8.18.0"
   },
   "devDependencies": {
